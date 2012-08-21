@@ -39,9 +39,6 @@
 # [rodrigo @ 01/02/2010] Atualizado para usar download do arquivo do Brasil, agora disponível no geofabrik.
 
 function processadownload() {
-# Não é necessário mais descompactar pois o splitter consegue ler arquivos *.pbf diretamente
-#  echo "Descompactando . . ."
-#  ${OSMOSIS_DIR}/bin/osmosis --read-pbf ${SA} --write-xml brazil.osm 1> /dev/null 2> osmosis.log
 
   echo "Dividindo arquivo osm do Brasil . . ."
   java -Xmx2000m -jar ${SPLITTER_DIR}/splitter.jar --output=xml ${SA} 1> /dev/null 2> splitter.log
@@ -57,14 +54,15 @@ function processadownload() {
       java -jar ${MKGMAP_DIR}/mkgmap.jar --country-name=Brasil --country-abbr=BR -n ${NOME} --latin1 --lower-case --route --net --add-pois-to-areas --preserve-element-order --link-pois-to-ways --location-autofill=1 ${FILE} 1> /dev/null 2> mkgmap-${NOME}.log
   done
 
+# Parametro --nsis se for criar instalador
   echo "Compilando gmapsupp.img . . ."
-  java -jar ${MKGMAP_DIR}/mkgmap.jar --tdbfile --nsis --gmapsupp `ls 632*.img` 1> /dev/null 2> mkgmap-gmapsupp.log
+  java -jar ${MKGMAP_DIR}/mkgmap.jar --tdbfile --gmapsupp `ls 632*.img` 1> /dev/null 2> mkgmap-gmapsupp.log
 
-  echo "Compilando NSIS file . . ."
-  makensis mapsource.nsi 1> /dev/null 2> makensis.log
+#  echo "Compilando NSIS file . . ."
+#  makensis mapsource.nsi 1> /dev/null 2> makensis.log
 
-  mv gmapsupp.img ./img/
-  mv Mapas\ do\ Brasil\ -\ maps.avila.net.br.exe ./img/
+  mv gmapsupp.img ${ORIGINAL_DIR}/img/
+#  mv Mapas\ do\ Brasil\ -\ maps.avila.net.br.exe ./img/
 
   rm template.args 2> /dev/null
   rm areas.list 2> /dev/null
@@ -73,19 +71,25 @@ function processadownload() {
   rm osmmap.* 2> /dev/null
 
   echo "Comprimindo arquivo para distribuição . . ."
-  cd ./img
+  cd ${ORIGINAL_DIR}/img
   zip brazil-${DATAZIP}.zip gmapsupp.img > /dev/null
-  zip brazil-mapsource-${DATAZIP}.zip Mapas\ do\ Brasil\ -\ maps.avila.net.br.exe > /dev/null
+#  zip brazil-mapsource-${DATAZIP}.zip Mapas\ do\ Brasil\ -\ maps.avila.net.br.exe > /dev/null
 
   sha512sum brazil-${DATAZIP}.zip > brazil-${DATAZIP}.zip.sha512
-  sha512sum brazil-mapsource-${DATAZIP}.zip > brazil-mapsource-${DATAZIP}.zip.sha512
+#  sha512sum brazil-mapsource-${DATAZIP}.zip > brazil-mapsource-${DATAZIP}.zip.sha512
 
   echo ""
   echo "Arquivos criados com sucesso. Rode o rsync para envia-los ao SourceForge."
   echo ""
 }
 
-clear
+# clear
+
+# Diretório temporário, para não poluir o 'workspace' do código com os arquivos
+TEMP_DIR=$(mktemp -d --tmpdir osm-garmin.XXX)
+
+# Diretório atual, para escrever os arquivos de saída
+ORIGINAL_DIR=$(pwd)
 
 # Diretório do OSMOSIS
 OSMOSIS_DIR="/home/thales/OSM/tools/osmosis-0.40.1"
@@ -108,12 +112,8 @@ DOWNLOAD="http://download.geofabrik.de/osm/south-america/"
 # Data atual, para ser usado no nome do arquivo zip
 DATAZIP=`date +%Y%m%d`
 
-echo "Removendo arquivos anteriores . . ."
-rm 6324000* ${SA} 2> /dev/null
-rm wget-log* 2> /dev/null
-rm osmosis.log splitter.log 2> /dev/null
-rm mkgmap-*.log 2> /dev/null
-rm makensis.log 2> /dev/null
+echo "Movendo para o diretório temporário para realizar as operações . . ."
+cd ${TEMP_DIR}
 
 echo "Baixando dados do Brasil (arquivo ${SA}) . . ."
 #curl -o ${SA} "${DOWNLOAD}${SA}"
@@ -129,14 +129,9 @@ if [ ${TAMANHO_ARQUIVO} -gt ${TAMANHO_MINIMO_ARQUIVO} ] ;
   then
     processadownload
   else
-    echo ""
-    echo "Arquivo menor que o permitido. Possível problema no download."
-    echo "Vou aguardar 1 hora, e tentar novamente."
-    echo ""
-    sleep 1h
-    cd /home/rodrigo/bigmap/brasil/
-    ./makebigmap.sh
-
+    echo "Fail"
 fi
 
-
+echo "Removendo arquivos temporários e voltando ao ponto de origem . . ."
+cd $ORIGINAL_DIR
+rm -r $TEMP_DIR
