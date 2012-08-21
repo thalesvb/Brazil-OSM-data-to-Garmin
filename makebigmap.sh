@@ -39,11 +39,12 @@
 # [rodrigo @ 01/02/2010] Atualizado para usar download do arquivo do Brasil, agora disponível no geofabrik.
 
 function processadownload() {
-  echo "Descompactando . . ."
-  ${OSMOSIS_DIR}/bin/osmosis --read-pbf ${SA} --write-xml brazil.osm 1> /dev/null 2> osmosis.log
+# Não é necessário mais descompactar pois o splitter consegue ler arquivos *.pbf diretamente
+#  echo "Descompactando . . ."
+#  ${OSMOSIS_DIR}/bin/osmosis --read-pbf ${SA} --write-xml brazil.osm 1> /dev/null 2> osmosis.log
 
   echo "Dividindo arquivo osm do Brasil . . ."
-  java -Xmx2000m -jar ${SPLITTER_DIR}/splitter.jar brazil.osm 1> /dev/null 2> splitter.log
+  java -Xmx2000m -jar ${SPLITTER_DIR}/splitter.jar --output=xml ${SA} 1> /dev/null 2> splitter.log
 
   echo "Compilando mapas . . ."
   rm ./img/*.img 2> /dev/null
@@ -53,11 +54,11 @@ function processadownload() {
     do
       eval NOME="\${FILE%${FILE#????????}}"
        echo "   ===> Processando arquivo ${NOME}"
-      mkgmap --country-name=Brasil --country-abbr=BR -n ${NOME} --latin1 --lower-case --route --net --add-pois-to-areas --preserve-element-order --link-pois-to-ways --location-autofill=1 ${FILE} 1> /dev/null 2> mkgmap-${NOME}.log
+      java -jar ${MKGMAP_DIR}/mkgmap.jar --country-name=Brasil --country-abbr=BR -n ${NOME} --latin1 --lower-case --route --net --add-pois-to-areas --preserve-element-order --link-pois-to-ways --location-autofill=1 ${FILE} 1> /dev/null 2> mkgmap-${NOME}.log
   done
 
   echo "Compilando gmapsupp.img . . ."
-  mkgmap --tdbfile --nsis --gmapsupp `ls 632*.img` 1> /dev/null 2> mkgmap-gmapsupp.log
+  java -jar ${MKGMAP_DIR}/mkgmap.jar --tdbfile --nsis --gmapsupp `ls 632*.img` 1> /dev/null 2> mkgmap-gmapsupp.log
 
   echo "Compilando NSIS file . . ."
   makensis mapsource.nsi 1> /dev/null 2> makensis.log
@@ -87,10 +88,13 @@ function processadownload() {
 clear
 
 # Diretório do OSMOSIS
-OSMOSIS_DIR="/home/rodrigo/bigmap/osmosis-0.39"
+OSMOSIS_DIR="/home/thales/OSM/tools/osmosis-0.40.1"
 
 # Diretório do Splitter
-SPLITTER_DIR="/home/rodrigo/bigmap/splitter-r174"
+SPLITTER_DIR="/home/thales/OSM/tools/splitter-r200"
+
+# Diretório do MkgMap
+MKGMAP_DIR="/home/thales/OSM/tools/mkgmap"
 
 # Arquivo com dados do Brasil
 SA="brazil.osm.pbf"
@@ -105,7 +109,7 @@ DOWNLOAD="http://download.geofabrik.de/osm/south-america/"
 DATAZIP=`date +%Y%m%d`
 
 echo "Removendo arquivos anteriores . . ."
-rm 6324000* brazil.osm ${SA} 2> /dev/null
+rm 6324000* ${SA} 2> /dev/null
 rm wget-log* 2> /dev/null
 rm osmosis.log splitter.log 2> /dev/null
 rm mkgmap-*.log 2> /dev/null
