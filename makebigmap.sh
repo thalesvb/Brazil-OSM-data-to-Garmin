@@ -51,12 +51,12 @@ function processadownload() {
     do
       eval NOME="\${FILE%${FILE#????????}}"
        echo "   ===> Processando arquivo ${NOME}"
-      java -jar ${MKGMAP_DIR}/mkgmap.jar --country-name=Brasil --country-abbr=BR -n ${NOME} --latin1 --lower-case --route --net --add-pois-to-areas --preserve-element-order --link-pois-to-ways --location-autofill=1 ${FILE} 1> /dev/null 2> mkgmap-${NOME}.log
+      java -jar ${MKGMAP_DIR}/mkgmap.jar --read-config=${ORIGINAL_DIR}/configs/${CONFIG_NAME}-map.cfg -n ${NOME} ${FILE} 1> /dev/null 2> mkgmap-${NOME}.log
   done
 
 # Parametro --nsis se for criar instalador
   echo "Compilando gmapsupp.img . . ."
-  java -jar ${MKGMAP_DIR}/mkgmap.jar --tdbfile --gmapsupp `ls 632*.img` 1> /dev/null 2> mkgmap-gmapsupp.log
+  java -jar ${MKGMAP_DIR}/mkgmap.jar --read-config=${ORIGINAL_DIR}/configs/${CONFIG_NAME}-gmapsupp.cfg `ls 632*.img` 1> /dev/null 2> mkgmap-gmapsupp.log
 
 #  echo "Compilando NSIS file . . ."
 #  makensis mapsource.nsi 1> /dev/null 2> makensis.log
@@ -85,6 +85,8 @@ function processadownload() {
 
 # clear
 
+# Config a ser utilizada
+CONFIG_NAME=Symbian
 # Diretório temporário, para não poluir o 'workspace' do código com os arquivos
 TEMP_DIR=$(mktemp -d --tmpdir osm-garmin.XXX)
 
@@ -118,6 +120,8 @@ cd ${TEMP_DIR}
 echo "Baixando dados do Brasil (arquivo ${SA}) . . ."
 #curl -o ${SA} "${DOWNLOAD}${SA}"
 wget -c ${DOWNLOAD}${SA}
+# O cp serve apenas para 'debugar', inves de ter q fazer download toda vez
+# cp /home/thales/OSM/${SA} ${TEMP_DIR}/
 
 # Testa se o arquivo baixado é maior que o tamanho do parâmetro
 TAMANHO_ARQUIVO=$(stat -c%s "${SA}")
