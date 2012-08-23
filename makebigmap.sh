@@ -51,7 +51,7 @@ function processadownload() {
     do
       eval NOME="\${FILE%${FILE#????????}}"
        echo "   ===> Processando arquivo ${NOME}"
-      java -jar ${MKGMAP_DIR}/mkgmap.jar --read-config=${ORIGINAL_DIR}/configs/${CONFIG_NAME}-map.cfg -n ${NOME} ${FILE} 1> /dev/null 2> mkgmap-${NOME}.log
+      java -jar ${MKGMAP_DIR}/mkgmap.jar --read-config=${ORIGINAL_DIR}/configs/${CONFIG_NAME}-map.cfg -n ${NOME} --style-file=${ORIGINAL_DIR}/styles/roads-only/ --style=roads-only ${FILE} 1> /dev/null 2> mkgmap-${NOME}.log
   done
 
 # Parametro --nsis se for criar instalador
@@ -63,12 +63,6 @@ function processadownload() {
 
   mv gmapsupp.img ${ORIGINAL_DIR}/img/
 #  mv Mapas\ do\ Brasil\ -\ maps.avila.net.br.exe ./img/
-
-  rm template.args 2> /dev/null
-  rm areas.list 2> /dev/null
-  rm *.img 2> /dev/null
-  rm *.tdb 2> /dev/null
-  rm osmmap.* 2> /dev/null
 
   echo "Comprimindo arquivo para distribuição . . ."
   cd ${ORIGINAL_DIR}/img

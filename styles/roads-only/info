@@ -1,0 +1,6 @@
+summary: Show only roads in map. No buildings, areas, polygons (except parkings). POIs are available.
+version=0.01
+
+description {
+Minimal display of features in map, focused for car use.
+}
