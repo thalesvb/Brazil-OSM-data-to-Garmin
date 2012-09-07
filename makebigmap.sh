@@ -39,10 +39,17 @@
 # [rodrigo @ 01/02/2010] Atualizado para usar download do arquivo do Brasil, agora disponível no geofabrik.
 
 function processadownload() {
+if [ -z "$REGION_POLY" ] ;
+  then
+    echo "Dividindo arquivo osm do Brasil . . ."
+    java -Xmx2000m -jar ${SPLITTER_DIR}/splitter.jar --output=xml ${SA} 1> /dev/null 2> splitter.log
+  else
+    echo "Reduzindo o pbf original na região desejada . . ."
+    ${OSMOSIS_DIR}/bin/osmosis --read-pbf ${SA} --buffer --bounding-polygon file=${REGION_POLY} --buffer --write-pbf region.osm.pbf 1> /dev/null 2> osmosis.log
 
-  echo "Dividindo arquivo osm do Brasil . . ."
-  java -Xmx2000m -jar ${SPLITTER_DIR}/splitter.jar --output=xml ${SA} 1> /dev/null 2> splitter.log
-
+    echo "Dividindo arquivo osm da região . . ."
+    java -Xmx2000m -jar ${SPLITTER_DIR}/splitter.jar --output=xml region.osm.pbf 1> /dev/null 2> splitter.log
+fi
   echo "Compilando mapas . . ."
   rm ./img/*.img 2> /dev/null
   rm ./img/*.exe 2> /dev/null
@@ -98,6 +105,9 @@ MKGMAP_DIR="/home/thales/OSM/tools/mkgmap"
 
 # Arquivo com dados do Brasil
 SA="brazil.osm.pbf"
+
+# Arquivo com o polígono da região menor que será criado o mapa (limites administrativos de estados, cidades,...)
+REGION_POLY=${ORIGINAL_DIR}/../region.poly
 
 # Tamanho mínimo (em bytes) do arquivo (para saber se baixou o arquivo completo)
 TAMANHO_MINIMO_ARQUIVO="65000000"
